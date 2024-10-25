@@ -7,7 +7,7 @@ import (
 	"tinygo.org/x/drivers/max72xx"
 )
 
-// example for a 4 digit 7 segment display
+// example for a 4 digit 7 segment display with 2 MAX7219 devices in series
 func main() {
 	// Pins for Arduino Nano 33 IOT
 	err := machine.SPI0.Configure(machine.SPIConfig{
@@ -21,28 +21,30 @@ func main() {
 		println(err.Error())
 	}
 
-	driver := max72xx.NewDevice(machine.SPI0, machine.D6)
-	driver.Configure()
+	numberOfDevices := 1 // 1 MAX7219 device
+	driver := max72xx.NewDevice(machine.SPI0, machine.D6, uint8(numberOfDevices))
 
-	digitNumber := 4
+	numberOfDigits := 4
+	driver.Configure(max72xx.Config{NumberOfDigits: uint8(numberOfDigits), Intensity: 8})
 
-	driver.StopDisplayTest()
-	driver.SetDecodeMode(4)
-	driver.SetScanLimit(4)
-	driver.SetIntensity(8)
-	driver.StopShutdownMode()
+	// driver.StopDisplayTest()
+	// driver.SetDecodeMode(4)
+	// driver.SetScanLimit(4)
+	// driver.SetIntensity(8)
+	// driver.StopShutdownMode()
 
-	for i := 1; i < int(digitNumber); i++ {
-		driver.WriteCommand(byte(i), byte(Blank))
+	for i := 1; i < int(numberOfDigits); i++ {
+		driver.WriteCommand(0, max72xx.Command{Register: byte(i), Data: byte(Blank)})
 	}
 
 	for {
 		for _, character := range characters {
 			println("writing", "characterValue:", character.String())
-			driver.WriteCommand(byte(4), byte(character))
-			driver.WriteCommand(byte(3), byte(character))
-			driver.WriteCommand(byte(2), byte(character))
-			driver.WriteCommand(byte(1), byte(character))
+			driver.WriteCommand(0, max72xx.Command{Register: byte(4), Data: byte(character)})
+			driver.WriteCommand(0, max72xx.Command{Register: byte(3), Data: byte(character)})
+			driver.WriteCommand(0, max72xx.Command{Register: byte(2), Data: byte(character)})
+			driver.WriteCommand(0, max72xx.Command{Register: byte(1), Data: byte(character)})
+
 			time.Sleep(500 * time.Millisecond)
 
 		}
